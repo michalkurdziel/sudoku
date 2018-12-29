@@ -1,13 +1,18 @@
 from unittest import TestCase
-from src.main import get_missing_values
-from src.main import FULL_SET
-from src.main import get_values_from_row, get_values_from_column, get_values_in_small_square
-from src.main import get_border
-from src.main import trim_zeros
-from src.main import get_next_zero
-from src.main import create_point_list
+from unittest import mock
 
-VALID_MATRIX = [
+from src.main import Cell
+from src.main import CellList
+from src.main import CellValidator
+from src import FULL_SET
+from src.main import create_points_matrix
+from src.main import get_border
+from src.main import get_missing_values
+from src.main import get_next_zero
+from src.main import get_values_from_row, get_values_from_column, get_values_in_small_square
+from src.main import trim_zeros
+
+TEST_MATRIX = [
     [0, 0, 1, 0, 0, 9, 0, 0, 0],
     [4, 0, 9, 1, 7, 0, 0, 0, 2],
     [0, 3, 5, 0, 4, 8, 1, 0, 0],
@@ -20,6 +25,34 @@ VALID_MATRIX = [
     [6, 9, 4, 0, 1, 3, 0, 5, 7],
     [0, 7, 2, 0, 0, 0, 0, 0, 0],
 ]
+
+TEST_MATRIX2 = [
+    [0, 3, 6, 0, 4, 7, 5, 2, 0],
+    [0, 4, 0, 6, 2, 5, 0, 0, 8],
+    [0, 0, 0, 3, 1, 0, 0, 7, 0],
+
+    [0, 1, 0, 5, 0, 6, 7, 0, 0],
+    [3, 0, 0, 0, 0, 0, 0, 0, 5],
+    [0, 0, 5, 7, 0, 4, 0, 8, 0],
+
+    [0, 2, 0, 0, 6, 8, 0, 0, 0],
+    [4, 0, 0, 2, 5, 3, 0, 9, 0],
+    [0, 5, 9, 4, 7, 0, 6, 3, 0]
+]
+CORRECT_MATRIX_2 = [
+    [1, 3, 6, 8, 4, 7, 5, 2, 9],
+    [9, 4, 7, 6, 2, 5, 3, 1, 8],
+    [5, 8, 2, 3, 1, 9, 4, 7, 6],
+
+    [2, 1, 8, 5, 9, 6, 7, 4, 3],
+    [3, 7, 4, 1, 8, 2, 9, 6, 5],
+    [6, 9, 5, 7, 3, 4, 2, 8, 1],
+
+    [7, 2, 3, 9, 6, 8, 1, 5, 4],
+    [4, 6, 1, 2, 5, 3, 8, 9, 7],
+    [8, 5, 9, 4, 7, 1, 6, 3, 2]
+]
+WORKING_COPY = TEST_MATRIX2
 
 
 class TestReturningValues(TestCase):
@@ -67,15 +100,14 @@ class TestGrubAllvalues(TestCase):
         results = get_values_from_column(input_matrix, col_number)
         assert expected_results == results, 'Expected {} but results is {}'.format(expected_results, results)
 
-
     def test_get_first_small_square_indexes(self):
-        expected_results = [0, 0, 1, 4, 0, 9, 0, 3, 5]
-        results = get_values_in_small_square(VALID_MATRIX, 0, 0)
+        expected_results = [0, 3, 6, 0, 4, 0, 0, 0, 0]
+        results = get_values_in_small_square(WORKING_COPY, 0, 0)
         assert expected_results == results, 'Expected {} but results is {}'.format(expected_results, results)
 
     def test_get_fourth_small_square_indexes(self):
-        expected_results = [0, 0, 0, 7, 3, 6, 9, 8, 2]
-        results = get_values_in_small_square(VALID_MATRIX, 4, 4)
+        expected_results = [5, 0, 6, 0, 0, 0, 7, 0, 4]
+        results = get_values_in_small_square(WORKING_COPY, 4, 4)
         assert expected_results == results, 'Expected {} but results is {}'.format(expected_results, results)
 
     def test_get_border(self):
@@ -89,30 +121,30 @@ class TestGrubAllvalues(TestCase):
         assert [6, 8] == get_border(7), 'Expected {} but results is {}'.format(expected_results, results)
         assert [6, 8] == get_border(8), 'Expected {} but results is {}'.format(expected_results, results)
 
-
     def test_get_next_zero(self):
         expected_results = (0, 0)
-        results = get_next_zero(VALID_MATRIX)
+        results = get_next_zero(TEST_MATRIX)
         assert expected_results == results, 'Expected {} but results is {}'.format(expected_results, results)
         expected_results = (1, 0)
-        results = get_next_zero(VALID_MATRIX, (1, 0))
+        results = get_next_zero(TEST_MATRIX, (1, 0))
         assert expected_results == results, 'Expected {} but results is {}'.format(expected_results, results)
         expected_results = (3, 0)
-        results = get_next_zero(VALID_MATRIX, (2, 0))
+        results = get_next_zero(TEST_MATRIX, (2, 0))
         assert expected_results == results, 'Expected {} but results is {}'.format(expected_results, results)
         expected_results = (1, 1)
-        results = get_next_zero(VALID_MATRIX, (0, 1))
+        results = get_next_zero(TEST_MATRIX, (0, 1))
         assert expected_results == results, 'Expected {} but results is {}'.format(expected_results, results)
         expected_results = (5, 1)
-        results = get_next_zero(VALID_MATRIX, (2, 1))
+        results = get_next_zero(TEST_MATRIX, (2, 1))
         assert expected_results == results, 'Expected {} but results is {}'.format(expected_results, results)
         expected_results = (7, 2)
-        results = get_next_zero(VALID_MATRIX, (4, 2))
+        results = get_next_zero(TEST_MATRIX, (4, 2))
         assert expected_results == results, 'Expected {} but results is {}'.format(expected_results, results)
 
 
 class TestBaseConfiguration(TestCase):
     full_set = [1, 2, 3, 4, 5, 6, 7, 8, 9]
+
     def test_full_set(self):
         assert self.full_set == FULL_SET
 
@@ -121,11 +153,97 @@ class TestUtilities(TestCase):
 
     def test_drop_zeros(self):
         expected_results = [1, 9]
-        results = trim_zeros(VALID_MATRIX[0])
+        results = trim_zeros(TEST_MATRIX[0])
         assert expected_results == results, 'Expected {} but results is {}'.format(expected_results, results)
 
 
-class TestCreatePointList(TestCase):
+class TestCellValidator(TestCase):
 
-    def test_create_point_list(self):
-        create_point_list()
+    @mock.patch('src.main.Cell', autospec=True)
+    def test_create_instance_valid(self, mock_cell):
+        validator = CellValidator(mock_cell)
+        self.assertIsInstance(validator, CellValidator, "validator = {}, CellValidator = {} ".format(validator, CellValidator))
+
+    def test_create_instance_raise_exception(self):
+        self.assertRaises(TypeError, CellValidator, 1)
+
+    def test_validate_by_row(self):
+        cell = Cell(0, 0, 0)
+        validator = CellValidator(cell)
+        validator._set_possible_values_by_row()
+        self.assertListEqual(cell.value, [1, 8, 9])
+
+    def test_validate_by_column(self):
+        cell = Cell(0, 0, 0)
+        validator = CellValidator(cell)
+        validator._set_possible_values_by_column()
+        self.assertListEqual(cell.value, [1, 2, 5, 6, 7, 8, 9])
+
+    def test_validate_by_square(self):
+        cell = Cell(0, 0, 0)
+        validator = CellValidator(cell)
+        validator._set_possible_values_by_square()
+        self.assertListEqual(cell.value, [1, 2, 5, 7, 8, 9])
+
+    def test_validate_by_three_dimenssions(self):
+        cell = Cell(0, 0, 0)
+        validator = CellValidator(cell)
+        validator.run()
+        self.assertListEqual(cell.value, [1, 8, 9])
+
+
+class TestCellList(TestCase):
+
+    @mock.patch('src.main.Cell', autospec=True)
+    def test_list_stores_proper_values(self, mock_cell):
+        cells = CellList([mock_cell, mock_cell, mock_cell])
+        self.assertEqual(len(cells), 3, len(cells))
+
+    def test_get_cell_by_cords(self):
+        cell = Cell(2, 2, 5)
+        cells = CellList([cell])
+        cell_ = cells.get_cell_by_cords(2, 2)
+        self.assertEqual(cell_.value, cell.value)
+
+    def test_get_values_from_row(self):
+        cell1 = Cell(0, 0, 1)
+        cell2 = Cell(0, 1, 1)
+        cell3 = Cell(0, 4, 1)
+        cell4 = Cell(2, 4, 3)
+        cells = CellList([cell1, cell2, cell3, cell4])
+        self.assertListEqual(cells.get_values_by_row(0), [1, 1, 1])
+
+    def test_status_check(self):
+        cells = CellList(create_points_matrix(CORRECT_MATRIX_2))
+        res = cells.isFinished()
+        self.assertTrue(res)
+
+        cells = CellList(create_points_matrix(TEST_MATRIX))
+        cells.print()
+        res = cells.isFinished()
+        self.assertFalse(res, "res: " + str(res))
+
+
+class TestCell(TestCase):
+
+    def test_create_intsance(self):
+        cell = Cell(1, 1, 1)
+        self.assertIsInstance(cell, Cell)
+
+
+class TestCheckInputMatrixes(TestCase):
+
+    def test_compare_two_matrix(self):
+        for i in range(9):
+            for j in range(9):
+                if TEST_MATRIX2[i][j] != 0:
+                    self.assertEqual(TEST_MATRIX2[i][j], CORRECT_MATRIX_2[i][j], "i: {}, j {}".format(i, j))
+
+    def test_general_validation(self):
+        cells = CellList(create_points_matrix(WORKING_COPY))
+        for i in range(3):
+            result = cells.validate()
+
+        for i in range(9):
+            for j in range(9):
+                self.assertEqual(result[i][j], CORRECT_MATRIX_2[i][j], "i= {}, j= {}".format(i, j))
