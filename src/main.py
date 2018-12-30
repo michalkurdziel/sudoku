@@ -1,65 +1,15 @@
-from src.consts import FULL_SET, WORKING_COPY
+from src.consts import puzzle
 
-
-def get_missing_values(values):
-    missing_values = set(FULL_SET) - set(values)
-    return list(missing_values)
-
-
-def get_values_from_row(matrix, row_no):
-    if row_no < 0 or row_no > 8:
-        raise AttributeError('Wrong row number')
-    return matrix[row_no]
-
-
-def get_values_from_column(matrix, col_no):
-    return [row[col_no] for row in matrix]
-
-
-def get_values_in_small_square(matrix, row, col):
-    result = []
-    rows_numbers = get_border(row)
-    cols_numbers = get_border(col)
-    for i in matrix[rows_numbers[0]:rows_numbers[1] + 1]:
-        for j in i[cols_numbers[0]:cols_numbers[1] + 1]:
-            result.append(j)
-    return result
+FULL_SET = [x for x in range(1, 10)]
 
 
 def get_border(value):
     if value <= 2:
-        return [0, 2]
+        return [0, 1, 2]
     elif 3 <= value <= 5:
-        return [3, 5]
+        return [3, 4, 5]
     else:
-        return [6, 8]
-
-
-def trim_zeros(table):
-    return [value for value in table if value != 0]
-
-
-def get_next_zero(matrix, cords=(0, 0)):
-    for i, row in enumerate(matrix[cords[1]:9]):
-        try:
-            return row.index(0, cords[0]), cords[1] + i
-        except AttributeError:
-            pass
-    return -1
-
-
-def minus_two_sets(first_set, second_set):
-    if isinstance(first_set, int):
-        first_set = [first_set]
-    return list(set(first_set) - set(second_set))
-
-
-def create_points_matrix(matrix):
-    points = []
-    for row_no, row in enumerate(matrix):
-        for column_no, cell in enumerate(row):
-            points.append(Cell(row_no, column_no, cell))
-    return points
+        return [6, 7, 8]
 
 
 class Cell:
@@ -90,46 +40,15 @@ class Cell:
             self._value = value
 
 
-class CellValidator:
-    cell_type = Cell
-
-    def __init__(self, cell):
-        if not isinstance(cell, self.cell_type):
-            raise TypeError("Wrong Type")
-        self.cell = cell
-
-    def _set_possible_values_by_row(self):
-        self.cell.value = minus_two_sets(self.cell.value,
-                                         get_values_from_row(WORKING_COPY, self.cell.row))
-        self.update_matrix()
-
-    def _set_possible_values_by_column(self):
-        self.cell.value = minus_two_sets(self.cell.value,
-                                         get_values_from_column(WORKING_COPY, self.cell.col))
-        self.update_matrix()
-
-    def _set_possible_values_by_square(self):
-        self.cell.value = minus_two_sets(self.cell.value,
-                                         get_values_in_small_square(WORKING_COPY, self.cell.row, self.cell.col))
-        self.update_matrix()
-
-    def run(self):
-        if not isinstance(self.cell.value, int):
-            self._set_possible_values_by_row()
-            self._set_possible_values_by_column()
-            self._set_possible_values_by_square()
-
-    def update_matrix(self):
-        if isinstance(self.cell.value, int) or len(self.cell.value) == 1:
-            WORKING_COPY[self.cell.row][self.cell.col] = self.cell.value
-
-
 class CellList(list):
     CELL_TYPE = Cell
 
-    def __init__(self, items):
-        for item in items:
-            self.append(item)
+    def __init__(self, input_data):
+        self.matrix = input_data
+
+        for row_no, row in enumerate(self.matrix):
+            for column_no, cell in enumerate(row):
+                self.append(Cell(row_no, column_no, cell))
 
     def append(self, item):
         if not isinstance(item, self.CELL_TYPE):
@@ -138,10 +57,7 @@ class CellList(list):
 
     def validate(self):
         for cell in self:
-            CellValidator(cell).run()
-            print(cell)
-
-        return WORKING_COPY
+            self.run(cell)
 
     def print(self):
         for i in self:
@@ -149,17 +65,9 @@ class CellList(list):
 
     def check_state(self):
         if self.isFinished():
-            print("still missing values")
-        print("That's ok!")
-
-    def get_cell_by_cords(self, row, col):
-        return [cell for cell in self if cell.row == row and cell.col == col][0]
-
-    def get_values_by_row(self, row):
-        return [cell.value for cell in self if cell.row == row]
-
-    def get_values_from_column(self, col):
-        return [row[col] for row in self]
+            print("That's ok!")
+        else:
+            print("Still missing values")
 
     def isFinished(self):
         for item in self:
@@ -167,16 +75,55 @@ class CellList(list):
                 return False
         return True
 
+    def update_matrix(self):
+        for cell in self:
+            if isinstance(cell.value, int) or len(cell.value) == 1:
+                self.matrix[cell.row][cell.col] = cell.value
+
+    def get_values_from_row(self, row):
+        return [cell.value for cell in self if cell.row == row and isinstance(cell.value, int)]
+
+    def get_values_from_column(self, col):
+        return [cell.value for cell in self if cell.col == col and isinstance(cell.value, int)]
+
+    def get_values_in_small_square(self, row, col):
+        rows_numbers = get_border(row)
+        cols_numbers = get_border(col)
+        return [cell.value for cell in self if cell.row in rows_numbers and cell.col in cols_numbers and isinstance(cell.value, int)]
+
+    def _set_possible_values_by_row(self, cell, set_to_compare):
+        cell.value = self.minus_two_sets(cell.value, set_to_compare)
+
+    def _set_possible_values_by_column(self, cell, set_to_compare):
+        cell.value = self.minus_two_sets(cell.value, set_to_compare)
+
+    def _set_possible_values_by_square(self, cell, set_to_compare):
+        cell.value = self.minus_two_sets(cell.value, set_to_compare)
+
+    def minus_two_sets(self, first_set, second_set):
+        if isinstance(first_set, int):
+            first_set = [first_set]
+        return list(set(first_set) - set(second_set))
+
+    def run(self, cell):
+        if not isinstance(cell.value, int):
+            self._set_possible_values_by_row(cell, self.get_values_from_row(cell.row))
+            self._set_possible_values_by_column(cell, self.get_values_from_column(cell.col))
+            self._set_possible_values_by_square(cell, self.get_values_in_small_square(cell.row, cell.col))
+
+    def generate_matrix(self):
+        matrix = [[0 for i in range(9)] for j in range(9)]
+        for cell in self:
+            matrix[cell.row][cell.col] = cell.value
+        return matrix
+
 
 if __name__ == '__main__':
-    for i in WORKING_COPY:
-        print(i)
-    cells = CellList(create_points_matrix(WORKING_COPY))
-    while not cells.isFinished():
-        print("Before validation: " + str(cells.check_state()))
-        cells.validate()
-        print("After validation: " + str(cells.check_state()))
+    cells = CellList(puzzle)
 
-    print("results:")
-    for i in WORKING_COPY:
-        print(i)
+    while not cells.isFinished():
+        cells.validate()
+        cells.check_state()
+
+    cells.print()
+    print(cells.generate_matrix())
