@@ -43,10 +43,8 @@ class Cell:
 class CellList(list):
     CELL_TYPE = Cell
 
-    def __init__(self, input_data):
-        self.matrix = input_data
-
-        for row_no, row in enumerate(self.matrix):
+    def __init__(self, matrix):
+        for row_no, row in enumerate(matrix):
             for column_no, cell in enumerate(row):
                 self.append(Cell(row_no, column_no, cell))
 
@@ -74,11 +72,6 @@ class CellList(list):
             if item.value == 0 or isinstance(item.value, list):
                 return False
         return True
-
-    def update_matrix(self):
-        for cell in self:
-            if isinstance(cell.value, int) or len(cell.value) == 1:
-                self.matrix[cell.row][cell.col] = cell.value
 
     def get_values_from_row(self, row):
         return [cell.value for cell in self if cell.row == row and isinstance(cell.value, int)]
